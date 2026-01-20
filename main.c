@@ -1,7 +1,10 @@
 #include <stdio.h>
+#include <stdlib.h>
+
+#include <editline/readline.h>
+#include <editline/history.h>
 
 
-static char input[2048];
 
 int main(int argc, char** argv) {
   
@@ -11,13 +14,13 @@ int main(int argc, char** argv) {
 
   while (1) {
 
-    fputs("MLL> ", stdout);
+    char* input = readline("MLL> ");
 
-    if(!fgets(input, 2048, stdin)){
-      break;
-    }
+    add_history(input);
 
-    printf("RUN: %s", input);
+    printf("RUN: %s\n", input);
+
+    free(input);
   }
 
   return 0;
