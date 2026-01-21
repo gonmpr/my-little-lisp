@@ -31,13 +31,25 @@ void add_history(char *unused){}
 #include <editline/history.h>
 #endif
 
-// cc -Wall -Wextra -std=c99 main.c -ledit -o mll
-
+// cc -std=c99 -Wall parsing.c mpc.c -ledit -lm -o parsing
 
 
 
 int main(int argc, char** argv) {
-  
+  mpc_parser_t* Number = mpc_new("number");
+  mpc_parser_t* Operator = mpc_new("operator");
+  mpc_parser_t* Expr = mpc_new("expr");
+  mpc_parser_t* MyLisp = mpc_new("mylisp");
+
+  mpca_lang(MPCA_LANG_DEFAULT,
+      "                                                   \
+        number  : /-?[0-9]+/ ;                            \
+        operator: '+' | '-' | '*' | '/';                  \
+        expr    : <number> | '(' <operator> <expr>+ ')';  \
+        mylisp  : /^/ <operator> <expr>+ /$/ ;            \
+      ",
+      Number, Operator, Expr, MyLisp);
+
 
   puts("My-little-lisp Line Interpreter");
   puts("Press Ctrl+c to Exit\n");
@@ -49,13 +61,23 @@ int main(int argc, char** argv) {
       free(input);
       continue;
     }
-
     add_history(input);
 
-    printf("RUN: %s\n", input);
+    /* Attempt to Parse the user Input */
+    mpc_result_t r;
+    if (mpc_parse("<stdin>", input, MyLisp, &r)) {
+      /* On Success Print the AST */
+      mpc_ast_print(r.output);
+      mpc_ast_delete(r.output);
+    } else {
+      /* Otherwise Print the Error */
+      mpc_err_print(r.error);
+      mpc_err_delete(r.error);
+    }
 
     free(input);
   }
 
+  mpc_cleanup(4, Number, Operator, Expr, MyLisp);
   return 0;
 }
